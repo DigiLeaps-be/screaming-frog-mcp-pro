@@ -1,25 +1,14 @@
 #!/bin/bash
 #
 # Installer voor screaming-frog-mcp-pro op macOS
-# Gebaseerd op de Digileaps installer v3.1, aangepast voor de Pro-fork.
-#
-# Werkwijze:
-#   1. Inventariseer wat al geïnstalleerd is (Java 21, Python 3.12, Ant, etc.)
-#   2. Installeer wat ontbreekt
-#   3. Clone deze repo (of gebruik lokale kopie)
-#   4. Maak venv en installeer
-#   5. Configureer Claude Desktop
+# Bash 3.2 compatibel (zoals geleverd door Apple op alle moderne Macs).
 #
 
 set -e
 
 # === Configuratie ===
 INSTALL_DIR="${SF_MCP_PRO_INSTALL_DIR:-$HOME/tools/screaming-frog-mcp-pro}"
-
-# Pas dit aan naar je eigen GitHub-repo na het pushen.
-# Of laat leeg om vanuit de huidige directory te installeren.
 REPO_URL="${SF_MCP_PRO_REPO_URL:-https://github.com/DigiLeaps-be/screaming-frog-mcp-pro.git}"
-
 CLAUDE_CONFIG="$HOME/Library/Application Support/Claude/claude_desktop_config.json"
 SERVER_NAME="screaming-frog-pro"
 
@@ -37,79 +26,113 @@ cat <<'EOF'
 
 EOF
 
-# === Inventaris ===
+# === Inventaris (geen associative arrays, voor bash 3.2 compatibiliteit) ===
 echo "Inventariseren wat er op je systeem staat..."
 echo
 
-declare -A status
+# Statussen als losse variabelen
+xcode_status=""
+brew_status=""
+python_status=""
+git_status=""
+java21_status=""
+ant_status=""
+JAVA21_HOME=""
+BREW_PREFIX=""
 
 # Xcode CLT
 if xcode-select -p >/dev/null 2>&1; then
-    status[xcode]="aanwezig"
+    xcode_status="aanwezig"
 else
-    status[xcode]="ONTBREEKT"
+    xcode_status="ONTBREEKT"
 fi
 
 # Homebrew
 if command -v brew >/dev/null 2>&1; then
-    status[brew]="aanwezig"
     BREW_PREFIX=$(brew --prefix)
+    brew_status="aanwezig"
 else
-    status[brew]="ONTBREEKT"
+    brew_status="ONTBREEKT"
 fi
 
 # Python 3.12
 if command -v python3.12 >/dev/null 2>&1; then
-    status[python]="aanwezig ($(python3.12 --version 2>&1))"
+    python_status="aanwezig ($(python3.12 --version 2>&1))"
 else
-    status[python]="ONTBREEKT"
+    python_status="ONTBREEKT"
 fi
 
 # Git
 if command -v git >/dev/null 2>&1; then
-    status[git]="aanwezig"
+    git_status="aanwezig"
 else
-    status[git]="ONTBREEKT"
+    git_status="ONTBREEKT"
 fi
 
 # OpenJDK 21
 if /usr/libexec/java_home -v 21 >/dev/null 2>&1; then
     JAVA21_HOME=$(/usr/libexec/java_home -v 21)
-    status[java21]="aanwezig ($JAVA21_HOME)"
+    java21_status="aanwezig ($JAVA21_HOME)"
 else
-    status[java21]="ONTBREEKT"
+    java21_status="ONTBREEKT"
 fi
 
 # Ant
 if command -v ant >/dev/null 2>&1; then
-    status[ant]="aanwezig"
+    ant_status="aanwezig"
 else
-    status[ant]="ONTBREEKT"
+    ant_status="ONTBREEKT"
 fi
 
-# Toon tabel
+# Tabel (printf werkt in bash 3.2)
+print_status() {
+    local name="$1"
+    local value="$2"
+    local color="$GREEN"
+    case "$value" in
+        ONTBREEKT*) color="$YELLOW" ;;
+    esac
+    printf "  %-20s ${color}%s${NC}\n" "$name" "$value"
+}
+
 printf "  %-20s %s\n" "Component" "Status"
 printf "  %-20s %s\n" "--------------------" "----------------------------------------"
-for k in xcode brew python git java21 ant; do
-    color="$GREEN"
-    [[ "${status[$k]}" == ONTBREEKT* ]] && color="$YELLOW"
-    printf "  %-20s ${color}%s${NC}\n" "$k" "${status[$k]}"
-done
+print_status "xcode" "$xcode_status"
+print_status "brew" "$brew_status"
+print_status "python" "$python_status"
+print_status "git" "$git_status"
+print_status "java21" "$java21_status"
+print_status "ant" "$ant_status"
 echo
 
 # === Plan ===
 echo "Plan:"
-to_install=()
-for k in xcode brew python git java21 ant; do
-    if [[ "${status[$k]}" == ONTBREEKT* ]]; then
-        to_install+=("$k")
-        echo "  - Installeren: $k"
+to_install=""
+add_to_install() {
+    if [ -z "$to_install" ]; then
+        to_install="$1"
+    else
+        to_install="$to_install $1"
     fi
-done
-if [ ${#to_install[@]} -eq 0 ]; then
+}
+needs_install() {
+    case "$1" in
+        ONTBREEKT*) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+needs_install "$xcode_status"  && add_to_install "xcode"  && echo "  - Installeren: Xcode Command Line Tools"
+needs_install "$brew_status"   && add_to_install "brew"   && echo "  - Installeren: Homebrew"
+needs_install "$python_status" && add_to_install "python" && echo "  - Installeren: Python 3.12"
+needs_install "$git_status"    && add_to_install "git"    && echo "  - Installeren: Git"
+needs_install "$java21_status" && add_to_install "java21" && echo "  - Installeren: OpenJDK 21"
+needs_install "$ant_status"    && add_to_install "ant"    && echo "  - Installeren: Apache Ant"
+
+if [ -z "$to_install" ]; then
     echo "  Alle dependencies zijn aanwezig."
 fi
-echo "  - Clone of kopieer screaming-frog-mcp-pro naar $INSTALL_DIR"
+echo "  - Clone of update screaming-frog-mcp-pro in $INSTALL_DIR"
 echo "  - Maak Python virtual environment"
 echo "  - Installeer screaming-frog-mcp-pro met pip install -e ."
 echo "  - Voeg '$SERVER_NAME' toe aan Claude Desktop config"
@@ -119,31 +142,39 @@ read -p "Doorgaan? [y/N] " -n 1 -r
 echo
 [[ $REPLY =~ ^[Yy]$ ]] || { echo "Geannuleerd."; exit 0; }
 
+# Helper om te checken of een component in de install-lijst zit
+in_install_list() {
+    case " $to_install " in
+        *" $1 "*) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
 # === Installaties ===
-if [[ " ${to_install[@]} " =~ " xcode " ]]; then
+if in_install_list "xcode"; then
     echo "Installeer Xcode Command Line Tools..."
     xcode-select --install || true
     echo "Volg de GUI-prompt en re-run dit script wanneer klaar."
     exit 0
 fi
 
-if [[ " ${to_install[@]} " =~ " brew " ]]; then
+if in_install_list "brew"; then
     echo "Installeer Homebrew..."
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     BREW_PREFIX=$(brew --prefix)
 fi
 
-if [[ " ${to_install[@]} " =~ " python " ]]; then
+if in_install_list "python"; then
     echo "Installeer Python 3.12..."
     brew install python@3.12
 fi
 
-if [[ " ${to_install[@]} " =~ " git " ]]; then
+if in_install_list "git"; then
     echo "Installeer Git..."
     brew install git
 fi
 
-if [[ " ${to_install[@]} " =~ " java21 " ]]; then
+if in_install_list "java21"; then
     echo "Installeer OpenJDK 21..."
     brew install openjdk@21
     echo "Symlink openjdk@21 zodat macOS Java 21 vindt (sudo nodig)..."
@@ -152,7 +183,7 @@ if [[ " ${to_install[@]} " =~ " java21 " ]]; then
     JAVA21_HOME=$(/usr/libexec/java_home -v 21)
 fi
 
-if [[ " ${to_install[@]} " =~ " ant " ]]; then
+if in_install_list "ant"; then
     echo "Installeer Apache Ant..."
     brew install ant
 fi
@@ -202,18 +233,27 @@ if [ -f "$CLAUDE_CONFIG" ]; then
     echo "  Backup gemaakt: $CLAUDE_CONFIG.bak.$timestamp"
 fi
 
-# Merge entry via python
-python3 <<PYEOF
+# Merge entry via python (export vars zodat python ze kan lezen)
+export CLAUDE_CONFIG_PATH="$CLAUDE_CONFIG"
+export INSTALL_DIR_PATH="$INSTALL_DIR"
+export JAVA21_HOME_PATH="$JAVA21_HOME"
+export SERVER_NAME_VAL="$SERVER_NAME"
+
+python3 <<'PYEOF'
 import json
 import os
 from pathlib import Path
 
-config_path = Path("$CLAUDE_CONFIG")
+config_path = Path(os.environ["CLAUDE_CONFIG_PATH"])
+install_dir = Path(os.environ["INSTALL_DIR_PATH"])
+java_home = os.environ["JAVA21_HOME_PATH"]
+server_name = os.environ["SERVER_NAME_VAL"]
+
 entry = {
-    "command": str(Path("$INSTALL_DIR") / ".venv" / "bin" / "screaming-frog-mcp-pro"),
+    "command": str(install_dir / ".venv" / "bin" / "screaming-frog-mcp-pro"),
     "env": {
-        "JAVA_HOME": "$JAVA21_HOME"
-    }
+        "JAVA_HOME": java_home,
+    },
 }
 
 if config_path.exists():
@@ -223,12 +263,12 @@ else:
     config = {}
 
 config.setdefault("mcpServers", {})
-config["mcpServers"]["$SERVER_NAME"] = entry
+config["mcpServers"][server_name] = entry
 
 with open(config_path, "w") as f:
     json.dump(config, f, indent=2)
 
-print(f"  Toegevoegd: mcpServers.$SERVER_NAME")
+print(f"  Toegevoegd: mcpServers.{server_name}")
 PYEOF
 
 cat <<'EOF'
