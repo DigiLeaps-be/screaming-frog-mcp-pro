@@ -6,4 +6,4 @@ PSI + Ahrefs).
 
 See README.md for changes vs upstream.
 """
-__version__ = "0.2.0"
+__version__ = "0.3.0"

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "screaming-frog-mcp-pro"
-version = "0.2.0"
+version = "0.3.0"
 description = "Enhanced MCP server for Screaming Frog SEO Spider with Derby-direct backend and cross-data audit tools (URLS + GSC + GA4 + PSI + Ahrefs)"
 readme = "README.md"
 requires-python = ">=3.10"
