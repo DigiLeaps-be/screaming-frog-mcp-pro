@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "screaming-frog-mcp-pro"
+version = "0.2.0"
+description = "Enhanced MCP server for Screaming Frog SEO Spider with Derby-direct backend and cross-data audit tools (URLS + GSC + GA4 + PSI + Ahrefs)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [
+    { name = "Digileaps", email = "hello@digileaps.be" },
+]
+keywords = ["screaming-frog", "seo", "mcp", "ahrefs", "gsc", "ga4", "pagespeed"]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Internet :: WWW/HTTP :: Site Management",
+]
+dependencies = [
+    "mcp[cli]>=1.0.0",
+    "screamingfrog>=0.2.0",
+]
+
+[project.urls]
+# Pas deze URL's aan naar je eigen GitHub-repo na het pushen.
+Homepage = "https://github.com/digileaps/screaming-frog-mcp-pro"
+Repository = "https://github.com/digileaps/screaming-frog-mcp-pro"
+Issues = "https://github.com/digileaps/screaming-frog-mcp-pro/issues"
+
+[project.scripts]
+screaming-frog-mcp-pro = "screaming_frog_mcp_pro.server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/screaming_frog_mcp_pro"]
