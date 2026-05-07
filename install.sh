@@ -18,7 +18,7 @@ INSTALL_DIR="${SF_MCP_PRO_INSTALL_DIR:-$HOME/tools/screaming-frog-mcp-pro}"
 
 # Pas dit aan naar je eigen GitHub-repo na het pushen.
 # Of laat leeg om vanuit de huidige directory te installeren.
-REPO_URL="${SF_MCP_PRO_REPO_URL:-https://github.com/digileaps/screaming-frog-mcp-pro.git}"
+REPO_URL="${SF_MCP_PRO_REPO_URL:-https://github.com/DigiLeaps-be/screaming-frog-mcp-pro.git}"
 
 CLAUDE_CONFIG="$HOME/Library/Application Support/Claude/claude_desktop_config.json"
 SERVER_NAME="screaming-frog-pro"

@@ -36,7 +36,7 @@ Als je werkt vanuit de Digileaps installer-package, hoef je hier niets te doen â
 ### Vanuit deze repo
 
 ```bash
-git clone https://github.com/digileaps/screaming-frog-mcp-pro.git
+git clone https://github.com/DigiLeaps-be/screaming-frog-mcp-pro.git
 cd screaming-frog-mcp-pro
 python3.12 -m venv .venv
 source .venv/bin/activate

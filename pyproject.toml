@@ -27,9 +27,9 @@ dependencies = [
 
 [project.urls]
 # Pas deze URL's aan naar je eigen GitHub-repo na het pushen.
-Homepage = "https://github.com/digileaps/screaming-frog-mcp-pro"
-Repository = "https://github.com/digileaps/screaming-frog-mcp-pro"
-Issues = "https://github.com/digileaps/screaming-frog-mcp-pro/issues"
+Homepage = "https://github.com/DigiLeaps-be/screaming-frog-mcp-pro"
+Repository = "https://github.com/DigiLeaps-be/screaming-frog-mcp-pro"
+Issues = "https://github.com/DigiLeaps-be/screaming-frog-mcp-pro/issues"
 
 [project.scripts]
 screaming-frog-mcp-pro = "screaming_frog_mcp_pro.server:main"
